@@ -15,7 +15,52 @@ include 'CONSTANTS/user_const.php';
 // Include database connection
 include 'conn.php';
 
-// Check if any user exists in database
+// NEW: Safe table setup function that preserves your user detection feature
+function safeSetupTables() {
+    $conn = getDBConnection();
+    
+    try {
+        // First check if users table exists
+        $table_check = $conn->query("SHOW TABLES LIKE 'users'");
+        
+        if ($table_check->num_rows == 0) {
+            // Table doesn't exist, create it with all columns
+            $sql = "CREATE TABLE users (
+                id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                email VARCHAR(100) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                account_type ENUM('super_admin', 'admin', 'client') DEFAULT 'client',
+                force_password_change TINYINT(1) DEFAULT 0,
+                created_by INT(6) UNSIGNED,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )";
+            
+            if ($conn->query($sql) === TRUE) {
+                error_log("✅ Users table created successfully");
+                // Don't create default user here - let your setup page handle it
+            } else {
+                error_log("❌ Error creating users table: " . $conn->error);
+            }
+        } else {
+            // Table exists, check if force_password_change column exists
+            $column_check = $conn->query("SHOW COLUMNS FROM users LIKE 'force_password_change'");
+            if ($column_check->num_rows == 0) {
+                // Add the new column
+                $conn->query("ALTER TABLE users ADD COLUMN force_password_change TINYINT(1) DEFAULT 0");
+                error_log("✅ Added force_password_change column to users table");
+            }
+        }
+        
+    } catch (Exception $e) {
+        error_log("❌ Table setup error: " . $e->getMessage());
+    } finally {
+        $conn->close();
+    }
+}
+
+// Check if any user exists in database - THIS IS YOUR IMPORTANT FEATURE
 function hasUsers() {
     $conn = getDBConnection();
     $result = $conn->query("SELECT id FROM users LIMIT 1");
@@ -153,33 +198,6 @@ function clearForcePasswordChange($user_id) {
     return setForcePasswordChange($user_id, false);
 }
 
-// Initialize tables with new field
-function setupTables() {
-    $conn = getDBConnection();
-    
-    // Check if force_password_change column exists
-    $result = $conn->query("SHOW COLUMNS FROM users LIKE 'force_password_change'");
-    if ($result->num_rows == 0) {
-        // Add the new column
-        $conn->query("ALTER TABLE users ADD COLUMN force_password_change TINYINT(1) DEFAULT 0");
-    }
-    
-    $sql = "CREATE TABLE IF NOT EXISTS users (
-        id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        account_type ENUM('super_admin', 'admin', 'client') DEFAULT 'client',
-        force_password_change TINYINT(1) DEFAULT 0,
-        created_by INT(6) UNSIGNED,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )";
-    
-    $conn->query($sql);
-    $conn->close();
-}
-
-// Initialize tables
-setupTables();
+// Initialize tables safely
+safeSetupTables();
 ?>
