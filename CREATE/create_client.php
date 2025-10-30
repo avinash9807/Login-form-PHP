@@ -1,5 +1,5 @@
 <?php
-// CREATE/create_admin.php - FIXED VERSION WITH DIRECT ACCESS
+// CREATE/create_client.php - FIXED VERSION WITH DIRECT ACCESS
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -10,9 +10,9 @@ if (session_status() == PHP_SESSION_NONE) {
 
 include '../config.php';
 
-// Check if super admin verified YA direct logged in as super admin - FIXED
-if (!isset($_SESSION['super_admin_verified']) && !(isSuperAdmin() && isset($_SESSION['user_id']))) {
-    header("Location: ../AUTH/verify_super_admin.php");
+// Check if admin verified YA direct logged in as admin/super_admin - FIXED
+if (!isset($_SESSION['admin_verified']) && !(isAdmin() && isset($_SESSION['user_id']))) {
+    header("Location: ../AUTH/verify_admin.php");
     exit();
 }
 
@@ -57,28 +57,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($result->num_rows > 0) {
             $error = "❌ Username or Email already exists!";
         } else {
-            // Insert new admin with name field and created_by tracking - FIXED
+            // Insert new client with name field and created_by tracking - FIXED
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO users (name, username, email, password, account_type, created_by) VALUES (?, ?, ?, ?, 'admin', ?)");
+            $stmt = $conn->prepare("INSERT INTO users (name, username, email, password, account_type, created_by) VALUES (?, ?, ?, ?, 'client', ?)");
             
-            // Get the Super Admin ID who is creating this admin - FIXED
+            // Get the Admin ID who is creating this client - FIXED
             if (isset($_SESSION['verified_user_id'])) {
                 $created_by = $_SESSION['verified_user_id']; // Verification se aaya hai
             } else {
-                $created_by = $_SESSION['user_id']; // Direct logged in Super Admin
+                $created_by = $_SESSION['user_id']; // Direct logged in Admin/Super Admin
             }
             $stmt->bind_param("ssssi", $name, $username, $email, $hashed_password, $created_by);
             
             if ($stmt->execute()) {
-                $success = "✅ ".DISPLAY_ADMIN." account created successfully!";
+                $success = "✅ ".DISPLAY_CLIENT." account created successfully!";
                 // Clear verification only if came from verification
-                if (isset($_SESSION['super_admin_verified'])) {
-                    unset($_SESSION['super_admin_verified']);
+                if (isset($_SESSION['admin_verified'])) {
+                    unset($_SESSION['admin_verified']);
                     unset($_SESSION['verified_admin']);
+                    unset($_SESSION['verified_admin_name']);
+                    unset($_SESSION['verified_admin_type']);
                     unset($_SESSION['verified_user_id']);
                 }
             } else {
-                $error = "❌ Failed to create admin account! " . $conn->error;
+                $error = "❌ Failed to create client account! " . $conn->error;
             }
         }
         
@@ -93,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Admin - <?php echo SITE_NAME; ?></title>
+    <title>Create Client - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         * {
@@ -191,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         button[type="submit"] {
             width: 100%;
             padding: 15px;
-            background: #28a745;
+            background: #6c757d;
             color: white;
             border: none;
             border-radius: 8px;
@@ -202,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-top: 10px;
         }
         button[type="submit"]:hover {
-            background: #218838;
+            background: #545b62;
             transform: translateY(-2px);
         }
         .error {
@@ -373,17 +375,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <div class="container">
-        <h2>👑 Create Admin Account</h2>
-        <p class="subtitle">Create a new administrator account for <?php echo SITE_NAME; ?></p>
+        <h2>👥 Create Client Account</h2>
+        <p class="subtitle">Create a new client account for <?php echo SITE_NAME; ?></p>
         
         <?php if (isset($_SESSION['verified_admin'])): ?>
             <div class="verified-info">
-                ✅ Verified as: <strong><?php echo $_SESSION['verified_admin']; ?></strong> (<?php echo DISPLAY_SUPER_ADMIN; ?>)
+                ✅ Verified as: <strong><?php echo $_SESSION['verified_admin']; ?></strong> 
+                (<?php echo $_SESSION['verified_admin_type'] == 'super_admin' ? DISPLAY_SUPER_ADMIN : DISPLAY_ADMIN; ?>)
             </div>
-        <?php elseif (isSuperAdmin() && isset($_SESSION['user_id'])): ?>
+        <?php elseif (isAdmin() && isset($_SESSION['user_id'])): ?>
             <div class="direct-access-info">
-                ✅ Direct Access as: <strong><?php echo $_SESSION['username']; ?></strong> (<?php echo DISPLAY_SUPER_ADMIN; ?>)<br>
-                <small>You are directly creating admin accounts without re-verification.</small>
+                ✅ Direct Access as: <strong><?php echo $_SESSION['username']; ?></strong> 
+                (<?php echo isSuperAdmin() ? DISPLAY_SUPER_ADMIN : DISPLAY_ADMIN; ?>)<br>
+                <small>You are directly creating client accounts without re-verification.</small>
             </div>
         <?php endif; ?>
         
@@ -395,29 +399,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="success"><?php echo $success; ?></div>
             <p style="text-align:center; margin-top:10px;">
                 <a href="../DASHBOARD/dashboard.php" style="color: #28a745; text-decoration: none; margin: 0 10px;">Go to Dashboard →</a>
-                <a href="create_admin.php" style="color: #007bff; text-decoration: none; margin: 0 10px;">Create Another Admin →</a>
+                <a href="create_client.php" style="color: #007bff; text-decoration: none; margin: 0 10px;">Create Another Client →</a>
             </p>
         <?php else: ?>
         
         <form method="POST" action="">
             <div class="form-group">
-                <label for="name">👤 Admin Full Name:</label>
-                <input type="text" id="name" name="name" placeholder="Enter admin full name" required>
+                <label for="name">👤 Client Full Name:</label>
+                <input type="text" id="name" name="name" placeholder="Enter client full name" required>
             </div>
             
             <div class="form-group">
-                <label for="username">🔑 Admin Username:</label>
-                <input type="text" id="username" name="username" placeholder="Enter admin username" required>
+                <label for="username">🔑 Client Username:</label>
+                <input type="text" id="username" name="username" placeholder="Enter client username" required>
                 <div class="note">Only letters, numbers, and underscores allowed. Spaces will be converted to underscores.</div>
             </div>
             
             <div class="form-group">
-                <label for="email">📧 Admin Email:</label>
-                <input type="email" id="email" name="email" placeholder="Enter admin email" required>
+                <label for="email">📧 Client Email:</label>
+                <input type="email" id="email" name="email" placeholder="Enter client email" required>
             </div>
             
             <div class="form-group">
-                <label for="password">🔒 Admin Password:</label>
+                <label for="password">🔒 Client Password:</label>
                 <div class="password-wrapper">
                     <input type="password" id="password" name="password" placeholder="Enter password (min 6 characters)" required>
                     <button type="button" class="toggle-password" onclick="togglePassword('password')">👁️</button>
@@ -432,7 +436,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
             </div>
             
-            <button type="submit">🚀 Create <?php echo DISPLAY_ADMIN; ?> Account</button>
+            <button type="submit">🚀 Create <?php echo DISPLAY_CLIENT; ?> Account</button>
         </form>
 
         <a href="../DASHBOARD/dashboard.php" class="back-btn">← Back to Dashboard</a>
