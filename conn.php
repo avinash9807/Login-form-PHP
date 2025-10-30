@@ -3,11 +3,11 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Your Database Credentials
-$db_host = 'sql100.ezyro.com';
-$db_user = 'ezyro_40131500';  
-$db_pass = 'Avinash9807@';
-$db_name = 'ezyro_40131500_stream';
+// put Your Database Credentials here
+$db_host = 'localhost';
+$db_user = 'avinash';  
+$db_pass = 'Avinash123';
+$db_name = 'stream';
 
 // Database Connection Function
 function getDBConnection() {
