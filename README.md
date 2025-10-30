@@ -17,7 +17,8 @@ or search @ding9807 on telegram
 
 ## 🎯 Live Demo
 
-[**🌐 Live Demo Link - Yahan Click Karein**](https://logintest.free.nf)
+[**🌐 Live Demo Link - click here**]
+(https://logintest.free.nf)
 
 🔐 Demo Credentials
 
