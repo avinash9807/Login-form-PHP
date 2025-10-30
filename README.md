@@ -14,3 +14,37 @@ super admin can manage both (admin & client) whereas admin can only manage clien
 
 for any assistance contact avinashpc9807@gmail.com 
 or search @ding9807 on telegram 
+
+## 🎯 Live Demo
+
+[**🌐 Live Demo Link - Yahan Click Karein**](https://logintest.free.nf)
+
+🔐 Demo Credentials
+
+🎯 Live Demo Access
+
+👨‍💼 Admin Login
+
+· Username: Admin
+· Password: demo123
+· Access: Full administrative privileges
+
+👤 Client Login
+
+· Username: Client
+· Password: demo123
+· Access: Standard user features
+
+---
+
+⚠️ Important Notes
+
+· These are demo credentials for testing purposes only
+· Please do not use these credentials for production
+· Feel free to explore all features with both accounts
+
+---
+
+🔒 Security Reminder
+
+After testing, remember to change these default credentials in production environment.
